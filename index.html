@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Little Fighter 2 — Play & Download R-LF2</title>
+  <meta name="description" content="Play the classic Little Fighter 2 instantly, and download Reinforced LF2 (R-LF2) for Windows.">
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --bg2: #0e131d;
+      --surface: #151c2b;
+      --surface-2: #1b2435;
+      --border: #273349;
+      --text: #eaeef7;
+      --muted: #93a0b8;
+      --accent: #ff5a3c;
+      --accent-2: #ff8a3c;
+      --glow: rgba(255, 90, 60, .35);
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background:
+        radial-gradient(1100px 600px at 50% -10%, #1a2336 0%, rgba(26,35,54,0) 60%),
+        linear-gradient(180deg, var(--bg2), var(--bg));
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1.5;
+    }
+    a { color: var(--accent-2); }
+
+    header.hero { text-align: center; padding: 40px 20px 12px; }
+    .badge {
+      display: inline-block; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--accent-2); border: 1px solid var(--border); border-radius: 999px;
+      padding: 4px 12px; margin-bottom: 14px; background: rgba(255,138,60,.06);
+    }
+    header.hero h1 {
+      margin: 0; font-size: clamp(34px, 6vw, 56px); font-weight: 800; letter-spacing: -.02em;
+      background: linear-gradient(90deg, #fff 10%, #ffd2c4 55%, var(--accent) 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    header.hero p { margin: 10px auto 0; max-width: 620px; color: var(--muted); font-size: 16px; }
+
+    main { width: 100%; max-width: 980px; padding: 18px 18px 40px; }
+
+    /* Game stage */
+    .stage {
+      position: relative; margin: 18px auto 0; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border); background: #000;
+      box-shadow: 0 24px 60px -24px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.02) inset, 0 0 60px -30px var(--glow);
+      min-height: 320px; display: flex; align-items: center; justify-content: center;
+    }
+    #screen_container { display: inline-block; line-height: 0; }
+    #screen_container > div { white-space: pre; font: 14px/1.1 monospace; color: #cfd6e4; }
+    #screen_container canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+
+    /* Loader overlay */
+    .overlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center;
+      background: radial-gradient(600px 300px at 50% 40%, #16203200, #0a0d14 80%); z-index: 3;
+    }
+    .overlay.hidden { display: none; }
+    .spinner {
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.12); border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status { font-size: 14px; color: var(--muted); }
+    .progress { width: min(420px, 80%); height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+    .bar { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .2s ease; }
+    .pct { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text); font-weight: 600; }
+
+    /* Click to play */
+    .playprompt {
+      position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: rgba(8,11,18,.45); backdrop-filter: blur(2px);
+    }
+    .playprompt.hidden { display: none; }
+    .play-pill {
+      display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: #1a0a06; font-weight: 800;
+      box-shadow: 0 10px 30px -8px var(--glow); font-size: 16px;
+    }
+
+    /* Buttons row */
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 18px 0 6px; }
+    .btn {
+      appearance: none; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600;
+      border-radius: 10px; padding: 11px 16px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+    }
+    .btn:hover { background: var(--surface-2); border-color: #34425f; }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary {
+      border: none; color: #1a0a06;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 10px 26px -10px var(--glow);
+    }
+    .btn.primary:hover { filter: brightness(1.06); background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+    .btn.ghost { background: transparent; color: var(--muted); }
+    .btn.ghost:hover { color: var(--text); }
+
+    /* Cards */
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 26px; }
+    @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+    .card h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--accent-2); }
+    .keys { display: grid; gap: 8px; }
+    .keyrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); }
+    kbd {
+      font: 600 12px/1 ui-monospace, monospace; color: var(--text); background: var(--surface-2);
+      border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; padding: 4px 7px; white-space: nowrap;
+    }
+    .card.tips p { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+    .card.tips p:last-child { margin-bottom: 0; }
+
+    footer { color: #5d667a; font-size: 12px; text-align: center; padding: 24px 18px 36px; max-width: 760px; }
+    footer a { color: #7d8aa3; }
+  </style>
+</head>
+
+<body>
+  <header class="hero">
+    <span class="badge">Classic 2D Fighter</span>
+    <h1>Little Fighter 2</h1>
+    <p>Jump straight into the legendary freeware brawler — then grab <strong>Reinforced LF2</strong> for the
+       beefed-up characters and Hell moves.</p>
+  </header>
+
+  <main>
+    <div class="stage">
+      <div id="screen_container"><div></div><canvas style="display:none"></canvas></div>
+
+      <div class="overlay" id="loader">
+        <div class="spinner"></div>
+        <div class="status" id="status">Preparing…</div>
+        <div class="progress"><div class="bar" id="bar"></div></div>
+        <div class="pct" id="pct"></div>
+      </div>
+
+      <div class="playprompt hidden" id="playprompt">
+        <span class="play-pill">▶ Click to play</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a class="btn primary" href="LF2_Reinforced.zip" download>⬇&nbsp; Download Reinforced LF2 (Windows)</a>
+      <button class="btn" id="fullscreen">⛶&nbsp; Fullscreen</button>
+      <button class="btn ghost" id="save_state">Save progress</button>
+      <button class="btn ghost" id="load_state">Load progress</button>
+      <input id="state_file" type="file" accept=".bin,.zst" hidden>
+    </div>
+
+    <section class="cards">
+      <div class="card">
+        <h3>Player 1</h3>
+        <div class="keys">
+          <div class="keyrow"><span>Move</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div>
+          <div class="keyrow"><span>Attack</span><kbd>J</kbd></div>
+          <div class="keyrow"><span>Jump</span><kbd>K</kbd></div>
+          <div class="keyrow"><span>Defend</span><kbd>L</kbd></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Player 2</h3>
+        <div class="keys">
+          <div class="keyrow"><span>Move</span><span><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></div>
+          <div class="keyrow"><span>Attack</span><kbd>1</kbd></div>
+          <div class="keyrow"><span>Jump</span><kbd>2</kbd></div>
+          <div class="keyrow"><span>Defend</span><kbd>3</kbd></div>
+        </div>
+      </div>
+      <div class="card tips">
+        <h3>Tips</h3>
+        <p>Click the screen to capture the keyboard. Press <kbd>Esc</kbd> or click away to release it.</p>
+        <p>In the menu, <kbd>F1</kbd>–<kbd>F8</kbd> choose game modes (VS, Stage, Championship…).</p>
+        <p>Your first visit downloads the game once, then it loads from cache.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Little Fighter 2 (Marti &amp; Starsky Wong) and Reinforced LF2 (Conrad Leung) are freeware by their
+    respective authors; this site distributes only the freeware game. Emulation by
+    <a href="https://github.com/copy/v86">v86</a>.
+  </footer>
+
+  <script src="libv86.js"></script>
+  <script>
+    "use strict";
+    const PARTS = ["windows95.img.part1.gz", "windows95.img.part2.gz", "windows95.img.part3.gz"];
+    const STATE = "win95-lf2-default.bin.zst";
+
+    const el = (id) => document.getElementById(id);
+    const setStatus = (m) => { el("status").textContent = m; };
+    const setProgress = (frac) => {
+      const pct = Math.max(0, Math.min(100, Math.round(frac * 100)));
+      el("bar").style.width = pct + "%";
+      el("pct").textContent = pct + "%";
+    };
+
+    async function loadDisk() {
+      setStatus("Downloading game…");
+      const responses = await Promise.all(PARTS.map(async (p) => {
+        const r = await fetch(p);
+        if (!r.ok) throw new Error(`failed to fetch ${p}: ${r.status}`);
+        return r;
+      }));
+      const total = responses.reduce((s, r) => s + (+r.headers.get("content-length") || 0), 0);
+      let loaded = 0;
+      const blobs = await Promise.all(responses.map(async (r) => {
+        const reader = r.body.getReader();
+        const chunks = [];
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          loaded += value.length;
+          if (total) setProgress(loaded / total);
+        }
+        return new Blob(chunks);
+      }));
+      setStatus("Decompressing…");
+      const gz = new Blob(blobs);
+      const buf = await new Response(gz.stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+      return new File([buf], "windows95.img");
+    }
+
+    window.onload = async () => {
+      let disk;
+      try {
+        disk = await loadDisk();
+      } catch (e) {
+        setStatus("Couldn't load the game: " + e.message);
+        el("bar").style.background = "#b33";
+        return;
+      }
+
+      setStatus("Starting Little Fighter 2…");
+      setProgress(1);
+      el("pct").textContent = "";
+
+      const emulator = new V86({
+        wasm_path: "v86.wasm",
+        memory_size: 64 * 1024 * 1024,   // must match the saved state
+        vga_memory_size: 16 * 1024 * 1024,
+        screen_container: el("screen_container"),
+        bios: { url: "seabios.bin" },
+        vga_bios: { url: "vgabios.bin" },
+        hda: { buffer: disk, async: true },
+        autostart: true,
+        initial_state: { url: STATE },
+      });
+
+      emulator.add_listener("emulator-ready", () => {
+        el("loader").classList.add("hidden");
+        el("playprompt").classList.remove("hidden");
+      });
+
+      const stage = el("screen_container");
+      const capture = () => {
+        emulator.lock_mouse();
+        el("playprompt").classList.add("hidden");
+      };
+      el("playprompt").addEventListener("click", capture);
+      stage.addEventListener("click", capture);
+
+      el("fullscreen").onclick = () => {
+        const t = document.querySelector(".stage");
+        if (t.requestFullscreen) t.requestFullscreen();
+      };
+
+      el("save_state").onclick = async () => {
+        const s = await emulator.save_state();
+        const a = document.createElement("a");
+        a.download = "lf2-save.bin";
+        a.href = URL.createObjectURL(new Blob([s]));
+        a.click();
+      };
+      el("load_state").onclick = () => el("state_file").click();
+      el("state_file").onchange = async (ev) => {
+        const f = ev.target.files[0];
+        if (!f) return;
+        await emulator.restore_state(await f.arrayBuffer());
+      };
+    };
+  </script>
+</body>
+
+</html>
